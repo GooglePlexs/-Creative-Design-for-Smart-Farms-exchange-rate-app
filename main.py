@@ -920,165 +920,50 @@ async def convert_currency(
         }
 
 
-    # Frankfurter API
+        # Frankfurter API
     url = (
-
         "https://api.frankfurter.dev/v2/rate/"
-
         + from_currency.lower()
-
         + "/"
-
         + to_currency.lower()
-
     )
 
-
     try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url)
 
-
-        async with httpx.AsyncClient(
-            timeout=10.0
-        ) as client:
-
-
-            response =
-                await client.get(url)
-
-
-            response.raise_for_status()
-
-
-            data =
-                response.json()
-
+        response.raise_for_status()
+        data = response.json()
 
     except httpx.TimeoutException:
-
-
         raise HTTPException(
-
             status_code=504,
-
-            detail=
-            "환율 서버 응답 시간이 초과되었습니다."
-
+            detail="환율 서버 응답 시간이 초과되었습니다."
         )
-
 
     except httpx.HTTPStatusError:
-
-
         raise HTTPException(
-
             status_code=502,
-
-            detail=
-            "환율 정보를 가져오지 못했습니다."
-
+            detail="환율 정보를 가져오지 못했습니다."
         )
-
 
     except httpx.HTTPError:
-
-
         raise HTTPException(
-
             status_code=502,
-
-            detail=
-            "외부 환율 서버 연결에 실패했습니다."
-
+            detail="외부 환율 서버 연결에 실패했습니다."
         )
 
-
     # 환율
-    rate =
-        float(data["rate"])
-
+    rate = float(data["rate"])
 
     # 실제 환전 계산
-    result =
-        amount * rate
-
+    result = amount * rate
 
     return {
-
-        "amount":
-            amount,
-
-        "from_currency":
-            from_currency,
-
-        "to_currency":
-            to_currency,
-
-        "rate":
-            rate,
-
-        "result":
-            round(result, 2),
-
-        "date":
-            data["date"]
-
-    }
-
-
-# ---------------------------------------------------------
-# 이름 인사 API
-# ---------------------------------------------------------
-
-@app.get("/hello")
-async def hello(
-    name: str
-):
-
-    return {
-
-        "message":
-            f"안녕하세요 {name}님!"
-
-    }
-
-
-# ---------------------------------------------------------
-# 곱셈 API
-# ---------------------------------------------------------
-
-@app.get("/multiply")
-async def multiply(
-
-    a: float,
-
-    b: float
-
-):
-
-    return {
-
-        "a":
-            a,
-
-        "b":
-            b,
-
-        "result":
-            a * b
-
-    }
-
-
-# ---------------------------------------------------------
-# 서버 상태 확인 API
-# ---------------------------------------------------------
-
-@app.get("/health")
-async def health():
-
-    return {
-
-        "status":
-            "ok"
-
+        "amount": amount,
+        "from_currency": from_currency,
+        "to_currency": to_currency,
+        "rate": rate,
+        "result": round(result, 2),
+        "date": data["date"]
     }
